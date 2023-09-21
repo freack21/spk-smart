@@ -54,4 +54,4 @@ if(!isset($_SESSION['username'])){
 				</div>
 				<div class="cell colspan4">
 				
-					<div style="padding:10px 15px;border:1px solid blue;background:white;">
+					<div style="padding:10px 15px;border:1px solid blue;background:white; min-height:50vh">
