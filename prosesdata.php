@@ -1,6 +1,7 @@
 
 <?php
 require 'phpoffice/autoload.php'; // Ubah path sesuai dengan struktur direktori Anda
+include 'config.php'; // Ubah path sesuai dengan struktur direktori Anda
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -31,26 +32,37 @@ if(isset($_POST["submit"])) {
             //     echo "</pre>";
             // }
 
-            $bobotPos = [];
+            $bobotKriteriaPos = [];
 
             // Loop melalui setiap sel pada lembar spreadsheet
             foreach ($worksheet->getRowIterator() as $row) {
                 foreach ($row->getCellIterator() as $cell) {
                     $cellValue = $cell->getValue();
-                    if (stripos($cellValue, 'bobot') !== false) {
+                    if (stripos($cellValue, 'bobot kriteria') !== false) {
                         // Kata "bobot" ditemukan dalam sel, lakukan tindakan yang sesuai
-                        array_push($bobotPos, (object)["row" => $row->getRowIndex(), "col" => $cell->getColumn()]);
+                        array_push($bobotKriteriaPos, (object)["row" => $row->getRowIndex(), "col" => $cell->getColumn()]);
                     }
                 }
             }
             // echo "<pre>";
-            // print_r($bobotPos); // Cetak data dari baris saat ini
+            // print_r($bobotKriteriaPos); // Cetak data dari baris saat ini
+            // // var_dump($worksheet->getCell(chr(ord($bobotKriteriaPos[0]->col)) . ($bobotKriteriaPos[0]->row))->getValue()); // Cetak data dari baris saat ini
             // echo "</pre>";
 
-            foreach ($bobotPos as $pos) {
-            echo "<pre>";
-            print_r($pos);
-            echo "</pre>";
+            $isKriteria = 1;
+            $curRow = 1;
+
+            while($isKriteria == 1) {
+                $kriteriaValue = $worksheet->getCell(chr(ord($bobotKriteriaPos[0]->col) - 1) . ($bobotKriteriaPos[0]->row + $curRow))->getValue();
+                $bobotValue = $worksheet->getCell($bobotKriteriaPos[0]->col . ($bobotKriteriaPos[0]->row + $curRow))->getValue();
+
+                $stmt = $db->prepare("INSERT INTO smart_kriteria values('',?,?)");
+                $stmt->bindParam(1,$kriteriaValue);
+                $stmt->bindParam(2,$bobotValue);
+                $stmt->execute();
+                
+                $curRow++;
+                if($worksheet->getCell(chr(ord($bobotKriteriaPos[0]->col) - 1) . ($bobotKriteriaPos[0]->row + $curRow))->getValue() == "") $isKriteria = 0;
             }
 
         } catch (Exception $e) {
