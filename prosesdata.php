@@ -10,26 +10,49 @@ if(isset($_POST["submit"])) {
     
     $xlsxFilePath = (upload());
     
-    var_dump($xlsxFilePath);
-
     if($xlsxFilePath) {
         try {
             // Load file XLSX
             $spreadsheet = IOFactory::load($xlsxFilePath);
         
             // Pilih sheet yang ingin Anda baca (misalnya, sheet pertama)
-            $worksheet = $spreadsheet->getActiveSheet();
+            $worksheet = $spreadsheet->getSheetByName("bobot");
         
             // Dapatkan jumlah baris dan kolom
             $highestRow = $worksheet->getHighestRow();
             $highestColumn = $worksheet->getHighestColumn();
         
             // Loop melalui sel-sel dan cetak isi
-            for ($row = 1; $row <= $highestRow; $row++) {
-                $rowData = $worksheet->rangeToArray('A' . $row . ':' . $highestColumn . $row, NULL, TRUE, FALSE);
-                // $rowData adalah array yang berisi data dari baris saat ini
-                print_r($rowData[0]); // Cetak data dari baris saat ini
+            // for ($row = 1; $row <= $highestRow; $row++) {
+            //     $rowData = $worksheet->rangeToArray('A' . $row . ':' . $highestColumn . $row, NULL, TRUE, FALSE);
+            //     // $rowData adalah array yang berisi data dari baris saat ini
+            //     echo "<pre>";
+            //     print_r($rowData[0]); // Cetak data dari baris saat ini
+            //     echo "</pre>";
+            // }
+
+            $bobotPos = [];
+
+            // Loop melalui setiap sel pada lembar spreadsheet
+            foreach ($worksheet->getRowIterator() as $row) {
+                foreach ($row->getCellIterator() as $cell) {
+                    $cellValue = $cell->getValue();
+                    if (stripos($cellValue, 'bobot') !== false) {
+                        // Kata "bobot" ditemukan dalam sel, lakukan tindakan yang sesuai
+                        array_push($bobotPos, (object)["row" => $row->getRowIndex(), "col" => $cell->getColumn()]);
+                    }
+                }
             }
+            // echo "<pre>";
+            // print_r($bobotPos); // Cetak data dari baris saat ini
+            // echo "</pre>";
+
+            foreach ($bobotPos as $pos) {
+            echo "<pre>";
+            print_r($pos);
+            echo "</pre>";
+            }
+
         } catch (Exception $e) {
             echo 'Terjadi kesalahan: ' . $e->getMessage();
         }
@@ -88,11 +111,12 @@ function upload() {
 		return false;
 	}
 
-	$namaFileBaru = time(). uniqid() . rand();
+	// $namaFileBaru = time(). uniqid() . rand();
+	$namaFileBaru = $namaFile;
 	$namaFileBaru .= '.';
 	$namaFileBaru .= $ekstensiData;
-
-	if(move_uploaded_file($tmpName, 'file/' . $namaFileBaru))
+    $namaFileBaru = 'file/' . $namaFileBaru;
+	if(move_uploaded_file($tmpName, $namaFileBaru))
     	return $namaFileBaru;
     else return false;
 }
