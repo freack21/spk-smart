@@ -1,16 +1,17 @@
-
 <?php
 require 'phpoffice/autoload.php'; // Ubah path sesuai dengan struktur direktori Anda
-include 'config.php'; // Ubah path sesuai dengan struktur direktori Anda
+include "header.php";
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
+set_time_limit(0);
+
 // Check if data file is a actual data or fake data
 if(isset($_POST["submit"])) {
-
-    
     $xlsxFilePath = (upload());
-    
+
+    //echo json_encode(['progress' => 1]);
+
     if($xlsxFilePath) {
         try {
             // Load file XLSX
@@ -18,108 +19,240 @@ if(isset($_POST["submit"])) {
         
             // Pilih sheet yang ingin Anda baca (misalnya, sheet pertama)
             $worksheet = $spreadsheet->getSheetByName("bobot");
-        
-            // Dapatkan jumlah baris dan kolom
-            $highestRow = $worksheet->getHighestRow();
-            $highestColumn = $worksheet->getHighestColumn();
-        
-            // Loop melalui sel-sel dan cetak isi
-            // for ($row = 1; $row <= $highestRow; $row++) {
-            //     $rowData = $worksheet->rangeToArray('A' . $row . ':' . $highestColumn . $row, NULL, TRUE, FALSE);
-            //     // $rowData adalah array yang berisi data dari baris saat ini
-            //     echo "<pre>";
-            //     print_r($rowData[0]); // Cetak data dari baris saat ini
-            //     echo "</pre>";
-            // }
 
             $bobotKriteriaPos = [];
-
-            // Loop melalui setiap sel pada lembar spreadsheet
             foreach ($worksheet->getRowIterator() as $row) {
                 foreach ($row->getCellIterator() as $cell) {
                     $cellValue = $cell->getValue();
                     if (stripos($cellValue, 'bobot kriteria') !== false) {
-                        // Kata "bobot" ditemukan dalam sel, lakukan tindakan yang sesuai
                         array_push($bobotKriteriaPos, (object)["row" => $row->getRowIndex(), "col" => $cell->getColumn()]);
                     }
                 }
             }
-            // echo "<pre>";
-            // print_r($bobotKriteriaPos); // Cetak data dari baris saat ini
-            // // var_dump($worksheet->getCell(chr(ord($bobotKriteriaPos[0]->col)) . ($bobotKriteriaPos[0]->row))->getValue()); // Cetak data dari baris saat ini
-            // echo "</pre>";
 
-            $isKriteria = 1;
+            //echo json_encode(['progress' => 10]);
+
+            $stmt = $db->prepare("DELETE FROM smart_kriteria");
+            $stmt->execute();
+            $stmt = $db->prepare("ALTER TABLE smart_kriteria AUTO_INCREMENT = 1;");
+            $stmt->execute();
+
+            //echo json_encode(['progress' => 15]);
+
+            $isKriteria = true;
             $curRow = 1;
+            try {
+                $db->beginTransaction();
 
-            while($isKriteria == 1) {
-                $kriteriaValue = $worksheet->getCell(chr(ord($bobotKriteriaPos[0]->col) - 1) . ($bobotKriteriaPos[0]->row + $curRow))->getValue();
-                $bobotValue = $worksheet->getCell($bobotKriteriaPos[0]->col . ($bobotKriteriaPos[0]->row + $curRow))->getValue();
+                $stmt = $db->prepare("INSERT INTO smart_kriteria VALUES ('', ?, ?)");
 
-                $stmt = $db->prepare("INSERT INTO smart_kriteria values('',?,?)");
-                $stmt->bindParam(1,$kriteriaValue);
-                $stmt->bindParam(2,$bobotValue);
-                $stmt->execute();
-                
-                $curRow++;
-                if($worksheet->getCell(chr(ord($bobotKriteriaPos[0]->col) - 1) . ($bobotKriteriaPos[0]->row + $curRow))->getValue() == "") $isKriteria = 0;
+                while ($isKriteria) {
+                    $kriteriaValue = $worksheet->getCell(chr(ord($bobotKriteriaPos[0]->col) - 1) . ($bobotKriteriaPos[0]->row + $curRow))->getValue();
+                    $bobotValue = $worksheet->getCell($bobotKriteriaPos[0]->col . ($bobotKriteriaPos[0]->row + $curRow))->getValue();
+
+                    $stmt->bindParam(1, $kriteriaValue);
+                    $stmt->bindParam(2, $bobotValue);
+
+                    if ($stmt->execute()) {
+                        $curRow++;
+                        $isKriteria = ($worksheet->getCell(chr(ord($bobotKriteriaPos[0]->col) - 1) . ($bobotKriteriaPos[0]->row + $curRow))->getValue() != "");
+                    } else {
+                        throw new Exception("Failed to execute SQL statement in KRITERIA.");
+                    }
+                }
+
+                $db->commit();
+            } catch (Exception $e) {
+                $db->rollBack();
+                // Handle exception if needed
+                echo "Error1: " . $e->getMessage();
             }
 
+            //echo json_encode(['progress' => 25]);
+
+            $stmt = $db->prepare("DELETE FROM smart_sub_kriteria");
+            $stmt->execute();
+            $stmt = $db->prepare("ALTER TABLE smart_sub_kriteria AUTO_INCREMENT = 1;");
+            $stmt->execute();
+
+            //echo json_encode(['progress' => 30]);
+
+            $stmt = $db->prepare("SELECT * FROM smart_kriteria");
+            $stmt->execute();
+            try {
+                $db->beginTransaction();
+
+                $stmt2 = $db->prepare("INSERT INTO smart_sub_kriteria VALUES ('', ?, ?, ?)");
+
+                while ($rowKriteria = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $isSubKriteria = true;
+                    $curRow = 1;
+                    $colRow = getColRow($worksheet, $rowKriteria["nama_kriteria"]);
+
+                    while ($isSubKriteria) {
+                        $subKriteriaValue = $worksheet->getCell($colRow->col . ($colRow->row + $curRow))->getValue();
+                        $subBobotValue = $worksheet->getCell(chr(ord($colRow->col) + 1) . ($colRow->row + $curRow))->getValue();
+                        $subBobotValue = floatval($subBobotValue) * 100;
+
+                        $stmt2->bindParam(1, $subKriteriaValue);
+                        $stmt2->bindParam(2, $subBobotValue);
+                        $stmt2->bindParam(3, $rowKriteria["id_kriteria"]);
+
+                        if($stmt2->execute()) {
+                            $curRow++;
+                            $isSubKriteria = ($worksheet->getCell($colRow->col . ($colRow->row + $curRow))->getValue() != "");
+                        } else {
+                            throw new Exception("Failed to execute SQL statement in SUB_KRITERIA.");
+                        }
+
+                    }
+                }
+
+                $db->commit();
+            } catch (Exception $e) {
+                $db->rollBack();
+                // Handle exception if needed
+                echo "Error2: " . $e->getMessage();
+            }
+
+            //echo json_encode(['progress' => 50]);
+
+            $stmt = $db->prepare("DELETE FROM smart_alternatif");
+            $stmt->execute();
+            $stmt = $db->prepare("ALTER TABLE smart_alternatif AUTO_INCREMENT = 1;");
+            $stmt->execute();
+
+            //echo json_encode(['progress' => 55]);
+
+            $worksheet = $spreadsheet->getSheetByName("calon");
+            $namaCell = getColRow($worksheet, "Nama Siswa");
+            if ($namaCell) {
+                $curRow = $namaCell->row + 1;
+                $isNamaSiswa = 1;
+
+                try {
+                    $db->beginTransaction();
+
+                    $stmt2 = $db->prepare("INSERT INTO smart_alternatif (id_alternatif, nama_alternatif) VALUES ('', ?)");
+
+                    while ($isNamaSiswa == 1) {
+                        $namaSiswa = $worksheet->getCell($namaCell->col . $curRow)->getValue();
+                        $stmt2->bindParam(1, $namaSiswa);
+
+                        if ($stmt2->execute()) {
+                            $curRow++;
+                            if ($worksheet->getCell($namaCell->col . $curRow)->getValue() == "") $isNamaSiswa = 0;
+                        } else {
+                            throw new Exception("Failed to execute SQL statement in ALTERNATIF.");
+                        }
+
+                    }
+
+                    $db->commit();
+                } catch (Exception $e) {
+                    $db->rollBack();
+                    // Handle exception if needed
+                    echo "Error3: " . $e->getMessage();
+                }
+            }
+
+            //echo json_encode(['progress' => 75]);
+
+            $stmt = $db->prepare("DELETE FROM smart_alternatif_kriteria");
+            $stmt->execute();
+            $stmt = $db->prepare("ALTER TABLE smart_alternatif_kriteria AUTO_INCREMENT = 1;");
+            $stmt->execute();
+
+            //echo json_encode(['progress' => 80]);
+
+            $worksheet = $spreadsheet->getSheetByName("calon");
+            $stmt = $db->prepare("SELECT * FROM smart_alternatif");
+            $stmt->execute();
+
+            try {
+                $db->beginTransaction();
+
+                $stmt2 = $db->prepare("SELECT * FROM smart_kriteria");
+                $stmt2->execute();
+
+                $stmt3 = $db->prepare("SELECT nilai_sub_kriteria FROM smart_sub_kriteria WHERE nama_sub_kriteria = ?");
+
+                $stmt4 = $db->prepare("INSERT INTO smart_alternatif_kriteria(id_alternatif, id_kriteria, nilai_alternatif_kriteria, nilai_utility) VALUES (?, ?, ?, ?)");
+
+                $stmt5 = $db->prepare("SELECT MAX(nilai_sub_kriteria) AS max_sub, MIN(nilai_sub_kriteria) AS min_sub FROM smart_sub_kriteria WHERE id_kriteria = ? GROUP BY id_kriteria");
+
+                while ($rowAlternatif = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $alternatifCell = getColRow($worksheet, $rowAlternatif["nama_alternatif"]);
+                    if (!$alternatifCell) continue;
+
+                    while ($rowKriteria = $stmt2->fetch(PDO::FETCH_ASSOC)) {
+                        $kriteriaCell = getColRow($worksheet, $rowKriteria["nama_kriteria"]);
+                        if (!$kriteriaCell) continue;
+
+                        $curRow = $alternatifCell->row;
+                        $subKriteriaValue = $worksheet->getCell($kriteriaCell->col . $curRow)->getValue();
+
+                        $stmt3->bindParam(1, $subKriteriaValue);
+                        $stmt3->execute();
+
+                        if ($rowSubKriteria = $stmt3->fetch(PDO::FETCH_NUM)) {
+                            $stmt4->bindParam(1, $rowAlternatif["id_alternatif"]);
+                            $stmt4->bindParam(2, $rowKriteria["id_kriteria"]);
+                            $stmt4->bindParam(3, $rowSubKriteria[0]);
+
+                            $stmt5->bindParam(1, $rowKriteria["id_kriteria"]);
+                            $stmt5->execute();
+
+                            if ($rowMaxMinSub = $stmt5->fetch(2)) {
+                                $utilityValue = ($rowSubKriteria[0] - $rowMaxMinSub["min_sub"]) /
+                                    ($rowMaxMinSub["max_sub"] - $rowMaxMinSub["min_sub"]);
+
+                                $stmt4->bindParam(4, $utilityValue);
+                                $stmt4->execute();
+                            } else {
+                                throw new Exception("Failed to execute SQL statement in ALTERNATIF_KRITERIA.");
+                            }
+
+                        }
+                    }
+
+                    // Reset statement2 pointer to the beginning for the next iteration
+                    $stmt2->execute();
+                }
+
+                $db->commit();
+            } catch (Exception $e) {
+                $db->rollBack();
+                // Handle exception if needed
+                echo "Error4: " . $e->getMessage();
+            }
+
+            //echo json_encode(['progress' => 100]);
+        ?>
+<p>Sukses!</p>
+<?php
+
+
         } catch (Exception $e) {
-            echo 'Terjadi kesalahan: ' . $e->getMessage();
+            echo "Error5: " . $e->getMessage();
         }
     }
-
-    // var_dump($_FILES["data"]);
-
-    // $target_dir = "file/";
-    // $target_file = $target_dir . basename($_FILES["data"]["name"]);
-    // $uploadOk = 1;
-    // $dataFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
-
-    // // Check if file already exists
-    // if (file_exists($target_file)) {
-    //     echo "Sorry, file already exists.";
-    //     $uploadOk = 0;
-    // }
-
-    // // Allow certain file formats
-    // if($dataFileType != "xlsx" && $dataFileType != "xls") {
-    //     echo "Sorry, only XLSX, XLS files are allowed.";
-    //     $uploadOk = 0;
-    // }
-
-    // // Check if $uploadOk is set to 0 by an error
-    // if ($uploadOk == 0) {
-    //     echo "Sorry, your file was not uploaded.";
-    // // if everything is ok, try to upload file
-    // } else {
-    //     if (move_uploaded_file($_FILES["data"]["tmp_name"], $target_file)) {
-    //         echo "The file ". htmlspecialchars( basename( $_FILES["data"]["name"])). " has been uploaded.";
-    //     } else {
-    //         echo "Sorry, there was an error uploading your file.";
-    //     }
-    // }
 }
 
 function upload() {
-
 	$namaFile = $_FILES['data']['name'];
-	$ukuranFile = $_FILES['data']['size'];
 	$error = $_FILES['data']['error'];
 	$tmpName = $_FILES['data']['tmp_name'];
 
 	if( $error === 4 ) {
-		echo "ERROR 4";
 		return false;
 	}
 
-	// cek apakah yang diupload adalah data
+	// cek apakah yang diupload adalah excel
 	$ekstensiDataValid = ['xlsx', 'xls'];
 	$ekstensiData = explode('.', $namaFile);
 	$ekstensiData = strtolower(end($ekstensiData));
 	if( !in_array($ekstensiData, $ekstensiDataValid) ) {
-		echo "Yang Anda Upload Bukan XLSX";
 		return false;
 	}
 
@@ -133,4 +266,18 @@ function upload() {
     else return false;
 }
 
+function getColRow($worksheet, $query) {
+    foreach ($worksheet->getRowIterator() as $row) {
+        foreach ($row->getCellIterator() as $cell) {
+            $cellValue = $cell->getValue();
+            if (stripos($cellValue, $query) !== false) {
+                // Kata "bobot" ditemukan dalam sel, lakukan tindakan yang sesuai
+                return (object)["row" => $row->getRowIndex(), "col" => $cell->getColumn()];
+            }
+        }
+    }
+    return false;
+}
+
+include "footer.php";
 ?>

@@ -52,7 +52,6 @@ INSERT INTO `smart_admin` (`id_admin`, `nama_admin`, `username`, `password`) VAL
 CREATE TABLE IF NOT EXISTS `smart_alternatif` (
   `id_alternatif` int(11) NOT NULL,
   `nama_alternatif` varchar(45) NOT NULL,
-  `nilai_utility` double NOT NULL,
   `hasil_alternatif` double NOT NULL,
   `ket_alternatif` text NOT NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
@@ -67,6 +66,7 @@ CREATE TABLE IF NOT EXISTS `smart_alternatif_kriteria` (
   `id_alternatif` int(11) NOT NULL,
   `id_kriteria` int(11) NOT NULL,
   `nilai_alternatif_kriteria` double NOT NULL,
+  `nilai_utility` double NOT NULL,
   `bobot_alternatif_kriteria` double NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
