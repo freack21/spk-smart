@@ -6,6 +6,23 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 set_time_limit(0);
 
+?>
+
+<div style="background-color: #f0f0f0; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 999; display:flex; justify-content:center; align-items:center; display: none;"
+    id="notificationDiv">
+    <div style="background-color: #fff; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden; text-align: center; padding: 1rem 3rem; max-width: 400px; display: none;"
+        id="notificationCard">
+        <div style="margin: 0.5rem 0; font-size: 4rem;" id="notificationLogo"></div>
+        <div style="font-size: 1.1rem; font-weight: bold; margin: 0rem 1rem;" id="notificationText"></div>
+        <div style="margin: 0.5rem 1rem;" id="notificationDescription"></div>
+        <a href="#"
+            style="display: block; margin: 1rem auto; padding: 0.7rem 1.2rem; background-color: #3498db; color: #fff; text-decoration: none; border-radius: 4px; transition: background-color 0.3s ease;"
+            onclick="redirectToHome()">Kembali ke Beranda</a>
+    </div>
+</div>
+
+<?php
+
 // Check if data file is a actual data or fake data
 if(isset($_POST["submit"])) {
     $xlsxFilePath = (upload());
@@ -65,7 +82,12 @@ if(isset($_POST["submit"])) {
             } catch (Exception $e) {
                 $db->rollBack();
                 // Handle exception if needed
-                echo "Error1: " . $e->getMessage();
+                $errText = "Error: " . $e->getMessage();
+                ?>
+<script>
+showNotification("eror", "⚠️", "GAGAL", <?= $errText ?>);
+</script>
+<?php
             }
 
             //echo json_encode(['progress' => 25]);
@@ -112,7 +134,12 @@ if(isset($_POST["submit"])) {
             } catch (Exception $e) {
                 $db->rollBack();
                 // Handle exception if needed
-                echo "Error2: " . $e->getMessage();
+                $errText = "Error: " . $e->getMessage();
+                ?>
+<script>
+showNotification("eror", "⚠️", "GAGAL", <?= $errText ?>);
+</script>
+<?php
             }
 
             //echo json_encode(['progress' => 50]);
@@ -152,7 +179,12 @@ if(isset($_POST["submit"])) {
                 } catch (Exception $e) {
                     $db->rollBack();
                     // Handle exception if needed
-                    echo "Error3: " . $e->getMessage();
+                    $errText = "Error: " . $e->getMessage();
+                    ?>
+<script>
+showNotification("eror", "⚠️", "GAGAL", <?= $errText ?>);
+</script>
+<?php
                 }
             }
 
@@ -224,17 +256,28 @@ if(isset($_POST["submit"])) {
             } catch (Exception $e) {
                 $db->rollBack();
                 // Handle exception if needed
-                echo "Error4: " . $e->getMessage();
+                $errText = "Error: " . $e->getMessage();
+                ?>
+<script>
+showNotification("eror", "⚠️", "GAGAL", <?= $errText ?>);
+</script>
+<?php
             }
 
             //echo json_encode(['progress' => 100]);
         ?>
-<p>Sukses!</p>
+<script>
+showNotification("sukses");
+</script>
 <?php
 
-
         } catch (Exception $e) {
-            echo "Error5: " . $e->getMessage();
+            $errText = "Error: " . $e->getMessage();
+            ?>
+<script>
+showNotification("eror", "⚠️", "GAGAL", <?= $errText ?>);
+</script>
+<?php
         }
     }
 }

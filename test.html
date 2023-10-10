@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Notification Card</title>
+        <style>
+            body {
+                font-family: "Poppins", Arial, sans-serif;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                background-color: #f0f0f0;
+            }
+
+            .notification-card {
+                background-color: #fff;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+                overflow: hidden;
+                text-align: center;
+                padding: 1rem 3rem;
+            }
+
+            .notification-logo {
+                margin: 0.5rem 0;
+                font-size: 4rem;
+            }
+
+            .notification-text {
+                font-size: 1.1rem;
+                font-weight: bold;
+                margin: 0 1rem;
+            }
+
+            .notification-description {
+                margin: 0.5rem 1rem;
+            }
+
+            .notification-button {
+                display: block;
+                margin: 1rem auto;
+                padding: 0.7rem 1.2rem;
+                background-color: #3498db;
+                color: #fff;
+                text-decoration: none;
+                border-radius: 4px;
+                transition: background-color 0.3s ease;
+            }
+
+            .notification-button:hover {
+                background-color: #2980b9;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="notification-card" id="notificationCard">
+            <div class="notification-logo" id="notificationLogo"></div>
+            <div class="notification-text" id="notificationText"></div>
+            <div
+                class="notification-description"
+                id="notificationDescription"
+            ></div>
+            <a href="#" class="notification-button" onclick="redirectToHome()"
+                >Kembali ke Beranda</a
+            >
+        </div>
+
+        <script>
+            // Fungsi untuk menampilkan notifikasi dengan parameter status ('success' atau 'error')
+            function showNotification(status) {
+                var logoElement = document.getElementById("notificationLogo");
+                var textElement = document.getElementById("notificationText");
+                var descriptionElement = document.getElementById(
+                    "notificationDescription"
+                );
+
+                // Setel logo, teks, dan deskripsi sesuai dengan status
+                if (status === "success") {
+                    logoElement.innerHTML = "✅"; // Emoji centang hijau untuk sukses
+                    textElement.textContent = "Sukses";
+                    descriptionElement.textContent =
+                        "Proses berhasil dilakukan.";
+                } else if (status === "error") {
+                    logoElement.innerHTML = "❌"; // Emoji silang merah untuk gagal
+                    textElement.textContent = "Gagal";
+                    descriptionElement.textContent =
+                        "Terjadi kesalahan dalam proses.";
+                } else if (status === "loading") {
+                    logoElement.innerHTML = "🔃"; // Emoji silang merah untuk gagal
+                    textElement.textContent = "LOADING..";
+                    descriptionElement.textContent =
+                        "Terjadi kesalahan dalam proses.";
+                }
+
+                // Tampilkan kartu notifikasi
+                document.getElementById("notificationCard").style.display =
+                    "block";
+            }
+
+            // Fungsi untuk mengarahkan pengguna kembali ke halaman beranda
+            function redirectToHome() {
+                // Gantilah URL ini dengan URL beranda yang sesuai
+                window.location.href = "halaman-beranda.html";
+            }
+
+            // Contoh pemanggilan notifikasi (bisa dari server setelah proses AJAX, dll.)
+            // Gantilah 'success' atau 'error' sesuai kebutuhan
+            showNotification("loading");
+        </script>
+    </body>
+</html>

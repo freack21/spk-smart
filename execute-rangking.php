@@ -1,6 +1,6 @@
 <?php
 include "header.php";
-$page = isset($_GET['page'])?$_GET['page']:"";
+
 $sangatlayak = 0;
 $layak = 0;
 $ditimbang = 0;
@@ -115,36 +115,37 @@ $tidaklayak = 0;
 </table>
 <p><br /></p>
 <div style="display:flex; justify-content: center; align-items:center; flex-direction:column;">
-    <div style="max-height: 500;">
-        <canvas id="myPieChart" width="400px" height="400px"></canvas>
+    <div style="max-width: 800px;">
+        <canvas id="myPieChart" width="500px" height="500px"></canvas>
     </div>
 </div>
 <script src="js/Chart.js"></script>
 <script>
 // Data mahasiswa
-var dataMahasiswa = {
+const dataMahasiswa = {
     labels: ['Sangat Layak', 'Layak', 'Dipertimbangkan', 'Tidak Layak'],
     datasets: [{
         data: [<?= $sangatlayak ?>, <?= $layak ?>, <?= $ditimbang ?>, <?= $tidaklayak ?>],
-        backgroundColor: ['#36A2EB', '#2ecc71', '#e67e22', '#e74c3c'],
+        backgroundColor: ['#36A2EB', '#2ecc71', '#e67e22', '#f71c1c'],
     }],
 };
 
 // Options untuk pie chart
-var options = {
+const options = {
     responsive: true,
 };
 
 // Mengambil elemen canvas
-var ctx = document.getElementById('myPieChart').getContext('2d');
+const ctx = document.getElementById('myPieChart').getContext('2d');
 
 // Membuat pie chart
-var myPieChart = new Chart(ctx, {
+const myPieChart = new Chart(ctx, {
     type: 'pie',
     data: dataMahasiswa,
     options: options,
 });
 </script>
+
 <?php
 include "footer.php";
 ?>

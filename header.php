@@ -19,6 +19,8 @@ window.location.assign("login.php")
     <link href="css/metro-icons.css" rel="stylesheet">
     <link href="css/metro-schemes.css" rel="stylesheet">
     <link href="css/metro-responsive.css" rel="stylesheet">
+
+    <script src="js/myjs.js"></script>
 </head>
 
 <body>
@@ -58,4 +60,20 @@ window.location.assign("login.php")
                 </div>
                 <div class="cell colspan4">
 
-                    <div style="padding:10px 15px;border:1px solid blue;background:white; min-height:50vh">
+                    <div style="padding:10px 15px;border:1px solid blue;background:white; min-height:50vh; position: relative;"
+                        id="container">
+                        <div style="background-color: #f0f0f0; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 999; display:flex; justify-content:center; align-items:center; display: none;"
+                            id="notificationDiv">
+                            <div style="background-color: #fff; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden; text-align: center; padding: 1rem 3rem; max-width: 400px; display: none;"
+                                id="notificationCard">
+                                <div style="margin: 0.5rem 0; font-size: 4rem;" id="notificationLogo"></div>
+                                <div style="font-size: 1.2rem; font-weight: bold; margin: .8rem 1rem;"
+                                    id="notificationText"></div>
+                                <div style="margin: 0.5rem 1rem;" id="notificationDescription"></div>
+                            </div>
+                        </div>
+                        <script>
+                        showNotification("loading");
+                        document.getElementById("container").style.overflow = "hidden";
+                        document.getElementById("container").style.maxHeight = "50vh";
+                        </script>
