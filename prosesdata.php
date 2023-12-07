@@ -41,7 +41,7 @@ if(isset($_POST["submit"])) {
             foreach ($worksheet->getRowIterator() as $row) {
                 foreach ($row->getCellIterator() as $cell) {
                     $cellValue = $cell->getValue();
-                    if (stripos($cellValue, 'bobot kriteria') !== false) {
+                    if ($cellValue === 'bobot kriteria') {
                         array_push($bobotKriteriaPos, (object)["row" => $row->getRowIndex(), "col" => $cell->getColumn()]);
                     }
                 }
@@ -313,7 +313,7 @@ function getColRow($worksheet, $query) {
     foreach ($worksheet->getRowIterator() as $row) {
         foreach ($row->getCellIterator() as $cell) {
             $cellValue = $cell->getValue();
-            if (stripos($cellValue, $query) !== false) {
+            if ($cellValue === $query) {
                 // Kata "bobot" ditemukan dalam sel, lakukan tindakan yang sesuai
                 return (object)["row" => $row->getRowIndex(), "col" => $cell->getColumn()];
             }
